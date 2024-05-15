@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Feature Engineering on Blog do Bruno</title>
+    <link>//localhost:4321/tags/feature-engineering/</link>
+    <description>Recent content in Feature Engineering on Blog do Bruno</description>
+    <generator>Hugo</generator>
+    <language>en-US</language>
+    <lastBuildDate>Tue, 14 May 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="//localhost:4321/tags/feature-engineering/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>A similaridade de cosseno, aproximações e eficência de código</title>
+      <link>//localhost:4321/2024/05/14/a-similaridade-de-cosseno-aproxima%C3%A7%C3%B5es-e-efic%C3%AAncia-de-c%C3%B3digo/</link>
+      <pubDate>Tue, 14 May 2024 00:00:00 +0000</pubDate>
+      <guid>//localhost:4321/2024/05/14/a-similaridade-de-cosseno-aproxima%C3%A7%C3%B5es-e-efic%C3%AAncia-de-c%C3%B3digo/</guid>
+      <description>Introdução Neste blog, exploramos a aplicação da similaridade de cosseno para calcular distâncias entre pontos geográficos, utilizando uma aproximação esférica da Terra. Embora tenhamos simplificado a forma da Terra para um esferoide perfeito, os resultados demonstraram que essa abordagem introduz erros mínimos, tornando-a uma alternativa viável e eficiente para cálculos de distâncias em grande escala.&#xA;Ao compararmos o método da similaridade de cosseno com a solução mais precisa do geopy, observamos que a diferença nas distâncias calculadas foi insignificante para a maioria das aplicações práticas, com um erro médio de apenas 0.</description>
+    </item>
+  </channel>
+</rss>

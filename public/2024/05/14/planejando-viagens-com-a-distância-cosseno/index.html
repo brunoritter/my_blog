@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=4321&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.126.0">
+
+
+<title>Planejando viagens com a distância cosseno - A Hugo website</title>
+<meta property="og:title" content="Planejando viagens com a distância cosseno - A Hugo website">
+
+
+  <link href='//localhost:4321/favicon.ico' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/rstudio/blogdown">GitHub</a></li>
+    
+    <li><a href="https://twitter.com/rstudio">Twitter</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">4 min read</span>
+    
+
+    <h1 class="article-title">Planejando viagens com a distância cosseno</h1>
+
+    
+    <span class="article-date">2024-05-14</span>
+    
+
+    <div class="article-content">
+      
+      <h1 id="o-desafio">O desafio</h1>
+<p>Depois de um tempo completamente dedicado à estudar matemática como os antigos faziam (lapiseira e papel), e usando python majoritariamente para fins astrofísicos, resolvi procurar alguns desafios relacionados a dados para exercitar um pouco o ferramental mais utilizado na prática da ciência de dados, como pandas, matplotlib e scikit-learn. Pesquisando no r/datascience, vi um colega indicando os desafios do data-puzzles.com.</p>
+<p>Um dos primeiros desafios é o travel planer, com a tag ‘feature engineering’. Considero que essa é uma das habilidades mais relevantes para um cientista de dados. A máxima “garbage in, garbage out” é repetida exaustivamente por uma razão: modelos simples com as features corretas podem operar milagres. O desafio te entrega uma base de dados com as coordenadas geográficas (latitude e longitude) de todas as capitais nacionais do mundo, e um objetivo simples: encontrar as duas capitais com a maior distância possível entre elas, considerando uma trajetória na superfície terrestre.</p>
+<p>O código abaixo carrega a base de dados e exibe as 5 primeiras linhas.</p>
+<pre><code class="language-python">import pandas as pd
+
+capitals_df = pd.read_csv('https://raw.githubusercontent.com/hyperc54/data-puzzles-assets/master/features/travel/worldcapitals_light.csv')
+print(capitals_df.head().to_markdown())
+</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align:right"></th>
+<th style="text-align:left">city</th>
+<th style="text-align:right">lat</th>
+<th style="text-align:right">lng</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">0</td>
+<td style="text-align:left">Tokyo</td>
+<td style="text-align:right">35.6839</td>
+<td style="text-align:right">139.774</td>
+</tr>
+<tr>
+<td style="text-align:right">1</td>
+<td style="text-align:left">Jakarta</td>
+<td style="text-align:right">-6.2146</td>
+<td style="text-align:right">106.845</td>
+</tr>
+<tr>
+<td style="text-align:right">2</td>
+<td style="text-align:left">Manila</td>
+<td style="text-align:right">14.6</td>
+<td style="text-align:right">120.983</td>
+</tr>
+<tr>
+<td style="text-align:right">3</td>
+<td style="text-align:left">Seoul</td>
+<td style="text-align:right">37.56</td>
+<td style="text-align:right">126.99</td>
+</tr>
+<tr>
+<td style="text-align:right">4</td>
+<td style="text-align:left">Mexico City</td>
+<td style="text-align:right">19.4333</td>
+<td style="text-align:right">-99.1333</td>
+</tr>
+</tbody>
+</table>
+<p>Para encontrar a melhor estratégia de solução, vamos fazer algumas considerações geométricas. Sabemos que a Terra não é exatamente um esfera. Além das montanhas, vales e outras “imperfeições” superficiais, a rotação do planeta faz com que ela seja achatada nos polos e alongada no equador, formando o que chamamos de um “esferóide oblato”.</p>
+<div style="text-align: center;">
+<img src="/images/tipos-de-esferoides.jpg" alt="tipos de esferóides"/>
+<p style="font-size: 0.8em; color: gray; margin-top: 5px;">A imagem mostra lado a lado um esferóide oblato (formato aproximado da Terra), um esferóide prolato (no qual o achatamento ocorre no equador, e o alongamento nos polos), e uma esfera.</p>
+</div>
+<p>Seria extremamente vantajoso tratar este problema assumindo que a Terra é perfeitamente esférica. Isso nos permitiria utilizar a métrica de similaridade de cosseno para medir distâncias, simplificando alguns cálculos que seriam necessários para refletir a variação do raio terreste. Sabendo as dimensões dos eixos do esferóide oblato correspondente às dimensões terrestres, podemos calcular o nível de achatamento do esferóide com a seguinte equação:</p>
+<p>$$
+f\ =\ \frac{\left(a-b\right)}{a}
+$$
+Onde <code>\(\mathbf{a}\)</code> é o raio equatorial (6.378Km), e <code>\(\mathbf{b}\)</code> é o raio polar (6.357Km). Substituindo os valores, calculamos <code>\(\mathbf{f} = 0.0034\)</code>. Esse valor é muito pequeno, e indica que a diferença entre o eixo maior e o menor é de aproximadamente 1 parte em 298.257. Considero seguro seguirmos em frente com a aproximação esférica e o uso da similaridade de cosseno.</p>
+<p>Vamos conferir os detalhes desta métrica.</p>
+<h1 id="a-similaridade-de-cosseno">A similaridade de cosseno</h1>
+<p>A similaridade de cosseno é amplamente utilizada em ciência de dados. Algumas das suas aplicações mais importantes incluem: algoritmos de clusterização (como K-means e K-NN), sistemas de recomendação (filtragem colaborativa) e embeddings de palavras e sentenças em modelos de linguagem de grande escala (LLMs).</p>
+<p>A aplicação geográfica que estamos fazendo é uma demonstração muito didática da motivação da similaridade de cosseno. A partir do centro do planeta Terra, traçamos uma linha reta até a posição de uma capital qualquer (vamos chamar de capital A). Esta linha é o vetor posição <code>\(\mathbf{p}_1\)</code>. Fazemos o mesmo procedimento para uma segunda capital (Capital B) para encontrar o vetor <code>\(\mathbf{p}_2\)</code>. O ângulo <code>\(\theta\)</code> entre os vetores <code>\(\mathbf{p}_1\)</code> e <code>\(\mathbf{p}_2\)</code> é proporcional à distância na superfície terrestre entre as capitais. O cosseno deste ângulo é a similaridade cosseno entre os vetores.</p>
+<div style="text-align: center;">
+<img src="/diagrams/cos_dist-1.png" alt="similaridade cosseno" width=300/>
+<p style="font-size: 0.8em; color: gray; margin-top: 5px;">O ângulo entre duas capitais</p>
+</div>
+<p>Enquanto nessa aplicação nossos vetores possuem 3 dimensões que representam as dimensões espaciais, em uma aplicação de clusterização cada dimensão dos vetores representaria uma característica dos objetos sendo agrupados (usários de um app, por exemplo). Em uma aplicação para NLP, o espaço seria composto pelas <code>\(\mathbf{n}\)</code> dimensões do word embedding, representando características latentes que capturam significados semânticos das palavras.</p>
+<p>O <em>scipy</em> já possui uma função para computar o cosseno entre vetores (experimente usar <code>from scipy.spatial.distance import cosine</code>). Mas pelo bem da educação, vamos implementar o cálculo &ldquo;do zero&rdquo;. Matematicamente, podemos partir da definição do produto interno entre dois vetores:</p>
+<p>$$
+\cos(\theta) = \frac{\mathbf{p}_1 \cdot \mathbf{p}_2}{|\mathbf{p}_1| |\mathbf{p}_2|}
+$$
+Ou seja, para encontrar a similaridade de cosseno entre dois vetores, calculamos o produto interno entre eles, e dividimos pelo produto dos seus módulos.</p>
+<h1 id="implementação-do-cálculo-de-distância">Implementação do cálculo de distância</h1>
+<p>Podemos usar um pouco de trigonometria para descrever os nossos vetores de posição - originalmente descritos em coordenadas esféricas - em termos das 3 coordenadas espaciais cartesianas (<em>x,y</em> e <em>z</em>). O diagrama abaixo mostra como os senos e cossenos dos ângulos que dão as coordenadas esféricas podem ser utilizados para fazer a transformação.</p>
+<div style="text-align: center;">
+<img src="/images/polar_to_cartesian.png" alt="coordenadas polares para cartesianas"  width=300/>
+<p style="font-size: 0.8em; color: gray; margin-top: 5px;">A relação entre coordenadas esféricas e coordenadas cartesianas</p>
+</div>
+<p>Usamos o numpy para fazer as operações:</p>
+<pre><code class="language-python">import numpy as np
+
+# Primeiro, convertemos os ângulos para radianos
+capitals_df['lat_radians'] = np.radians(capitals_df['lat'])
+capitals_df['lng_radians'] = np.radians(capitals_df['lng'])
+
+# Usamos as relações demonstradas no diagrama acima para encontrar as coordenadas cartesianas
+capitals_df['x'] = np.cos(capitals_df['lat_radians']) * np.cos(capitals_df['lng_radians'])
+capitals_df['y'] = np.cos(capitals_df['lat_radians']) * np.sin(capitals_df['lng_radians'])
+capitals_df['z'] = np.sin(capitals_df['lat_radians'])
+</code></pre>
+<p>Perceba que, ao fazer essas transformações,meus vetores são normalizados. Na prática, isso significa que podemos simplificar o cálculo da distância como <code>\(\cos(\theta) = \mathbf{p}_1 \cdot \mathbf{p}_2}\)</code></p>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" alt="Img link to Hugo website" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  
+
+
+  </body>
+</html>
+

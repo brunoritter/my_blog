@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>//localhost:4321/</loc>
+    <lastmod>2024-05-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>//localhost:4321/about/</loc>
+    <lastmod>2024-05-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>//localhost:4321/2024/05/14/a-similaridade-de-cosseno-aproxima%C3%A7%C3%B5es-e-efic%C3%AAncia-de-c%C3%B3digo/</loc>
+    <lastmod>2024-05-14T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>//localhost:4321/categories/</loc>
+    <lastmod>2024-05-14T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>//localhost:4321/tags/data-science/</loc>
+    <lastmod>2024-05-14T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>//localhost:4321/categories/data-science/</loc>
+    <lastmod>2024-05-14T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>//localhost:4321/tags/feature-engineering/</loc>
+    <lastmod>2024-05-14T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>//localhost:4321/tags/geometria/</loc>
+    <lastmod>2024-05-14T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>//localhost:4321/post/</loc>
+    <lastmod>2024-05-14T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>//localhost:4321/tags/</loc>
+    <lastmod>2024-05-14T00:00:00+00:00</lastmod>
+  </url>
+</urlset>
