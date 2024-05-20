@@ -12,8 +12,6 @@ output:
 ```{r setup, include=FALSE}
 library(reticulate)
 library(knitr)
-use_python("C:/Users/ritte/miniconda3/envs/blog/python.exe")
-#use_condaenv("C:/Users/ritte/miniconda3/envs/blog", conda = "C:/Users/ritte/miniconda3/Scripts/conda.exe", required = TRUE)
 
 knitr::opts_chunk$set(echo = TRUE, results = 'asis', message = FALSE, warning = FALSE)
 ```
