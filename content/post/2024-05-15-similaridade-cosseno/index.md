@@ -9,14 +9,7 @@ output:
     keep_md: true
 ---
 
-```{r setup, include=FALSE}
-library(reticulate)
-library(knitr)
-use_python("C:/Users/ritte/miniconda3/envs/blog/python.exe")
-#use_condaenv("C:/Users/ritte/miniconda3/envs/blog", conda = "C:/Users/ritte/miniconda3/Scripts/conda.exe", required = TRUE)
 
-knitr::opts_chunk$set(echo = TRUE, results = 'asis', message = FALSE, warning = FALSE)
-```
 # Introdução
 
 Neste blog, exploramos a aplicação da similaridade de cosseno para calcular distâncias entre pontos geográficos, utilizando uma aproximação esférica da Terra. Embora tenhamos simplificado a forma da Terra para um esferoide perfeito, os resultados demonstraram que essa abordagem introduz erros mínimos, tornando-a uma alternativa viável e eficiente para cálculos de distâncias em grande escala.
@@ -35,14 +28,27 @@ Um dos primeiros desafios é o [travel planer](https://data-puzzles.com/challeng
 
 O código abaixo carrega a base de dados e exibe as 5 primeiras linhas.
 
-```{python,echo=TRUE, cache=TRUE}
+
+```python
 import pandas as pd
 
 capitals_df = pd.read_csv('https://raw.githubusercontent.com/hyperc54/data-puzzles-assets/master/features/travel/worldcapitals_light.csv')
 print(capitals_df.shape)
-print(capitals_df.head().to_markdown())
-
 ```
+
+(249, 3)
+
+```python
+print(capitals_df.head().to_markdown())
+```
+
+|    | city        |     lat |      lng |
+|---:|:------------|--------:|---------:|
+|  0 | Tokyo       | 35.6839 | 139.774  |
+|  1 | Jakarta     | -6.2146 | 106.845  |
+|  2 | Manila      | 14.6    | 120.983  |
+|  3 | Seoul       | 37.56   | 126.99   |
+|  4 | Mexico City | 19.4333 | -99.1333 |
 
 Para encontrar a melhor estratégia de solução, vamos fazer algumas considerações geométricas. Sabemos que a Terra não é exatamente uma esfera. A rotação do planeta faz com que ele seja achatado nos polos e alongado no equador, formando o que chamamos de um “esferóide oblato”.
 
@@ -59,7 +65,7 @@ No entanto, seria extremamente vantajoso tratar este problema assumindo que a Te
 $$
 f\ =\ \frac{a-b}{a}
 $$
-Onde $\mathbf{a}$ é o raio equatorial (6.378Km), e $\mathbf{b}$ é o raio polar (6.357Km). Substituindo os valores, calculamos $\mathbf{f} = 0.0034$. Esse valor é muito pequeno, e indica que a diferença entre o eixo maior e o menor é de aproximadamente 1 parte em 298.257. Considero seguro seguirmos em frente com a aproximação esférica e o uso da similaridade de cosseno. 
+Onde `\(\mathbf{a}\)` é o raio equatorial (6.378Km), e `\(\mathbf{b}\)` é o raio polar (6.357Km). Substituindo os valores, calculamos `\(\mathbf{f} = 0.0034\)`. Esse valor é muito pequeno, e indica que a diferença entre o eixo maior e o menor é de aproximadamente 1 parte em 298.257. Considero seguro seguirmos em frente com a aproximação esférica e o uso da similaridade de cosseno. 
 
 Vamos conferir os detalhes desta métrica.
 
@@ -68,7 +74,7 @@ Vamos conferir os detalhes desta métrica.
 
 A similaridade de cosseno é amplamente utilizada em ciência de dados. Algumas das suas aplicações mais importantes incluem: algoritmos de clusterização (como K-means e K-NN), sistemas de recomendação (filtragem colaborativa) e embeddings de palavras e sentenças em modelos de linguagem de grande escala (LLMs).
 
-A aplicação geográfica que estamos fazendo é uma demonstração muito didática da motivação da similaridade de cosseno. A partir do centro do planeta Terra, traçamos uma linha reta até a posição de uma capital qualquer (vamos chamar de capital A). Esta linha é o vetor posição $\mathbf{p}_1$. Fazemos o mesmo procedimento para uma segunda capital (Capital B) para encontrar o vetor $\mathbf{p}_2$. O ângulo $\theta$ entre os vetores $\mathbf{p}_1$ e $\mathbf{p}_2$ é proporcional à distância na superfície terrestre entre as capitais. O cosseno deste ângulo é a similaridade cosseno entre os vetores.
+A aplicação geográfica que estamos fazendo é uma demonstração muito didática da motivação da similaridade de cosseno. A partir do centro do planeta Terra, traçamos uma linha reta até a posição de uma capital qualquer (vamos chamar de capital A). Esta linha é o vetor posição `\(\mathbf{p}_1\)`. Fazemos o mesmo procedimento para uma segunda capital (Capital B) para encontrar o vetor `\(\mathbf{p}_2\)`. O ângulo `\(\theta\)` entre os vetores `\(\mathbf{p}_1\)` e `\(\mathbf{p}_2\)` é proporcional à distância na superfície terrestre entre as capitais. O cosseno deste ângulo é a similaridade cosseno entre os vetores.
 
 
 <div style="text-align: center;">
@@ -77,7 +83,7 @@ A aplicação geográfica que estamos fazendo é uma demonstração muito didát
 <p style="font-size: 0.8em; color: gray; margin-top: 5px;">O ângulo entre duas capitais.</p>
 </div>
 
-Enquanto nessa aplicação nossos vetores possuem 3 dimensões que representam as dimensões espaciais, em uma aplicação de clusterização cada dimensão dos vetores representaria uma característica dos objetos sendo agrupados (usários de um app, por exemplo). Em uma aplicação para NLP, o espaço seria composto pelas $\mathbf{n}$ dimensões do word embedding, representando características latentes que capturam significados semânticos das palavras.
+Enquanto nessa aplicação nossos vetores possuem 3 dimensões que representam as dimensões espaciais, em uma aplicação de clusterização cada dimensão dos vetores representaria uma característica dos objetos sendo agrupados (usários de um app, por exemplo). Em uma aplicação para NLP, o espaço seria composto pelas `\(\mathbf{n}\)` dimensões do word embedding, representando características latentes que capturam significados semânticos das palavras.
 
 O *scipy* já possui uma função para computar o cosseno entre vetores (experimente usar `from scipy.spatial.distance import cosine`). Mas pelo bem da educação, vamos implementar o cálculo "do zero". Matematicamente, podemos partir da definição do produto interno entre dois vetores: 
 
@@ -100,7 +106,8 @@ Podemos usar um pouco de trigonometria para descrever os nossos vetores de posi�
 
 Usamos o numpy para fazer as operações:
 
-```{python, echo=TRUE, cache=TRUE}
+
+```python
 import numpy as np
 
 # Converte os ângulos para radianos
@@ -113,9 +120,10 @@ capitals_df['y'] = np.cos(capitals_df['lat_radians']) * np.sin(capitals_df['lng_
 capitals_df['z'] = np.sin(capitals_df['lat_radians'])
 ```
 
-Perceba que, ao fazer essas transformações, os vetores são normalizados. Na prática, isso significa que podemos simplificar o cálculo da distância para $\cos(\theta) = \mathbf{p}_1 \cdot \mathbf{p}_2$\. Precisamos calcular o produto interno entre todos os vetores posição das nossas capitais. Felizmente, a àlgebra linear está a nosso favor. Se agregarmos todos os vetores posição em uma matriz, basta multiplicá-la pela sua transposta para obter os produtos internos. O numpy segue sendo a ferramenta adequada:
+Perceba que, ao fazer essas transformações, os vetores são normalizados. Na prática, isso significa que podemos simplificar o cálculo da distância para `\(\cos(\theta) = \mathbf{p}_1 \cdot \mathbf{p}_2\)`\. Precisamos calcular o produto interno entre todos os vetores posição das nossas capitais. Felizmente, a àlgebra linear está a nosso favor. Se agregarmos todos os vetores posição em uma matriz, basta multiplicá-la pela sua transposta para obter os produtos internos. O numpy segue sendo a ferramenta adequada:
 
-```{python, echo=TRUE, cache=TRUE}
+
+```python
 # Cria matriz de vetores de posição
 matrix = capitals_df[['x', 'y', 'z']].to_numpy()
 
@@ -125,7 +133,8 @@ cos = np.clip(np.dot(matrix, matrix.T), -1, 1)
 
 Com os ângulos calculados, é simples de encontrar as distâncias, considerando que as trajetórias são os arcos que conectam os vetores, que possuem módulos constantes iguais ao raio da Terra (na nossa aproximação esférica). Vamos considerar que o raio da nossa Terra redonda é o ponto médio entre o raio polar e o raio equatorial.
 
-```{python, echo=TRUE, cache=TRUE}
+
+```python
 # Calcula raio da Terra redonda
 min_earth_r = 6357
 max_earth_r = 6378
@@ -138,7 +147,8 @@ pairwise_distances = (theta * mid_earth_r)
 
 Pronto! Tudo calculado. Para encontrar a resposta do quiz (os nomes das duas capitais com maior distância entre si), buscamos os índices da maior distância armazenada nessa matriz.
 
-```{python, echo=TRUE, cache=TRUE}
+
+```python
 # Encontra e armazena os índíces das duas capitais mais distantes, assim como o módulo da separação entre elas 
 max_distance = np.amax(pairwise_distances)
 city_indexes = np.unravel_index(np.argmax(theta), theta.shape)
@@ -149,13 +159,16 @@ city_b = capitals_df['city'][city_indexes[1]]
 print(f"As capitais mais distantes são {city_a} e {city_b}, com uma separação de {np.round(max_distance, 1)} Km")
 ```
 
+As capitais mais distantes são Manama e Adamstown, com uma separação de 19859.3 Km
+
 Agora podemos conferir o gabarito e colocar nossa aproximação esférica a prova. Foi ou não uma boa aproximação? O site tem um notebook com uma solução diferente implementada. Vamos ver.
 
 # O nosso método VS o "método correto"
 
 A solução do gabarito usa um método mais preciso para calcular as distâncias, disponível na função *distance* do *geopy*. E, em contraste com a operação matricial que demonstrei, faz um loop duplo por todas as linhas do dataset, extraindo os valores de latitude e longitude e os utilizando como input para a a função do *geopy*. 
 
-```{python, echo=TRUE, cache=TRUE}
+
+```python
 from geopy import distance
 
 geopy_pairwise_distances = np.empty([capitals_df.shape[0], capitals_df.shape[0]])
@@ -187,6 +200,8 @@ city2_max = capitals_df.iloc[i_city2_max].city
 print(f"As capitais mais distantes são {city1_max} e {city2_max}, com uma separação de {np.round(geopy_max_distance, 1)} Km")
 ```
 
+As capitais mais distantes são Doha e Adamstown, com uma separação de 19865.5 Km
+
 Hm, erramos. 
 
 Mas temos algumas coisas interessantes acontecendo. 
@@ -195,12 +210,15 @@ Primeiro, note que Adamstown faz parte do par nos dois métodos, e que as maiore
 
 Em segundo lugar: quando rodei o código disponibilizado pelo gabarito notei que o tempo de execução foi gritantemente maior do que o tempo de execução do código que implementei. Rodei tudo de novo, dessa vez usando a biblioteca *time* para monitorar o tempo de execução dos dois métodos com precisão e fazer a comparação. Aqui, para não extender desenessariamente o texto, coloco como input os tempos calculados no meu notebook.
 
-```{python, echo=TRUE, cache=TRUE}
+
+```python
 cosine_execution_time = 0.019317626953125
 geopy_execution_time = 45.09127330780029
 
 print(f"O método do cosseno é {int(geopy_execution_time/cosine_execution_time)} mais rápido.")
 ```
+
+O método do cosseno é 2334 mais rápido.
 
 O método aproximado é milhares de vezes mais rápido! A solução do gabarito leva 45s para calcular as distâncias entre 249 cidades. Em uma aplicação real, não é difícil chegar em milhares ou milhões de pontos. Neste cenário, o ganho de eficiência demonstrado aqui seria ainda mais valioso.
 
@@ -208,7 +226,8 @@ Porém, antes de bater o martelo sobre qual seria o método mais adequado, é ú
 
 Vamos calcular os erros para cada par de capitais.
 
-```{python, echo=TRUE, cache=TRUE}
+
+```python
 # Calcula os erros em Km e em termos de erro relativo (MAPE)
 upper_triangle_indices = np.triu_indices_from(pairwise_distances, k=1)
 pairwise_distances_flat = pairwise_distances[upper_triangle_indices]
@@ -219,9 +238,12 @@ error_relative = (error_km/geopy_pairwise_distances_flat)*100
 print(f"O método dos cossenos tem um erro médio de {np.round(np.mean(error_km),1)} Km ({np.round(np.mean(error_relative), 2)}%)")
 ```
 
+O método dos cossenos tem um erro médio de 12.3 Km (0.17%)
+
 E vamos ver como estes erros se distribuem.
 
-```{python, echo=TRUE, cache=TRUE}
+
+```python
 import matplotlib.pyplot as plt
 
 plt.figure(figsize=(15, 15))
@@ -245,6 +267,8 @@ plt.title('Relative error boxplot')
 plt.tight_layout()
 plt.show()
 ```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="1440" />
 
 Não me restam mais dúvidas. A aproximação esférica resulta em erros muito pequenos, praticamente desprezíveis. Quase 3/4 da distâncias apresentam menos 0.2% de erro. Nenhuma distância apresenta erro maior do que 35Km. E o método é mais de 2300x mais rápido. Em uma aplicação profissional, implementaria a aproximação esférica sem pensar duas vezes.
 
