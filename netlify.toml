@@ -4,7 +4,6 @@
 
 [build.environment]
   HUGO_VERSION = "0.126.0"
-  PYTHON_VERION =  "3.12"
 
 [context.branch-deploy]
   command = "pip install -r requirements.txt && hugo --gc --minify -b $DEPLOY_PRIME_URL"
