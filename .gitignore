@@ -3,4 +3,6 @@
 .RData
 .Ruserdata
 .Rprofile
+blog_proj.Rproj
 /public/
+/R/

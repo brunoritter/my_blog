@@ -95,7 +95,7 @@ img {
 }
 
 .content {
-  max-width: 870px;
+  max-width: 850px;
   margin: 40px auto 10px;
   padding: 0 15px;
   font-size: 16px;
@@ -244,6 +244,7 @@ img {
 .footer-links li:first-child::before {
   display: none;
 }
+
 .footer-links-kudos img {
   position: relative;
   top: 6px;
@@ -272,7 +273,7 @@ img {
   }
 
   .content {
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1.8;
   }
 
@@ -316,9 +317,12 @@ img {
 }
 
 @media print {
-  .header, .footer {
+
+  .header,
+  .footer {
     display: none;
   }
+
   .article-content a {
     box-shadow: none;
   }
