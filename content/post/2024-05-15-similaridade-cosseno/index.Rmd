@@ -199,7 +199,7 @@ Mas temos algumas coisas interessantes acontecendo.
 
 Primeiro, note que Adamstown faz parte do par nos dois métodos, e que as maiores distâncias encontradas por cada método diferem em menos de 10Km. Dada a ordem de grandeza das distâncias medidas, e considerando que a extensão espacial de uma capital costuma ser maior do que 10Km, na prática, podemos dizer que essa diferença é insignificante. 
 
-Assumimos no ínicio, com o argumento do achatamento desprezível, que os erros seriam pequenos. Agora, temos as distâncias calculadas tanto pelo método exato, quanto pela aproximação. 
+Assumimos no ínicio, com o argumento do achatamento desprezível, que os erros seriam pequenos. Agora temos as distâncias calculadas tanto pelo método exato quanto pela aproximação. 
 
 Vamos calcular os erros para cada par de capitais.
 

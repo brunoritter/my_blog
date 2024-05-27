@@ -215,7 +215,7 @@ Mas temos algumas coisas interessantes acontecendo.
 
 Primeiro, note que Adamstown faz parte do par nos dois métodos, e que as maiores distâncias encontradas por cada método diferem em menos de 10Km. Dada a ordem de grandeza das distâncias medidas, e considerando que a extensão espacial de uma capital costuma ser maior do que 10Km, na prática, podemos dizer que essa diferença é insignificante. 
 
-Assumimos no ínicio, com o argumento do achatamento desprezível, que os erros seriam pequenos. Agora, temos as distâncias calculadas tanto pelo método exato, quanto pela aproximação. 
+Assumimos no ínicio, com o argumento do achatamento desprezível, que os erros seriam pequenos. Agora temos as distâncias calculadas tanto pelo método exato quanto pela aproximação. 
 
 Vamos calcular os erros para cada par de capitais.
 
@@ -292,7 +292,7 @@ geopy_execution_time = geopy_time_end-geopy_time_start
 print(f"Geopy - Tempo de execução: {np.round(geopy_execution_time, 4)} s")
 ```
 
-Geopy - Tempo de execução: 33.8079 s
+Geopy - Tempo de execução: 34.227 s
 
 ```python
 # Executa e mede tempo de execução do método proposto
@@ -314,13 +314,13 @@ cosine_execution_time = time_end-time_start
 print(f"Aproximação - Tempo de execução: {np.round(cosine_execution_time, 4)} s")
 ```
 
-Aproximação - Tempo de execução: 0.0503 s
+Aproximação - Tempo de execução: 0.0478 s
 
 ```python
 print(f"O método do cosseno é {int(geopy_execution_time/cosine_execution_time)} mais rápido.")
 ```
 
-O método do cosseno é 672 mais rápido.
+O método do cosseno é 716 mais rápido.
 
 Neste exercício, estamos calculando distâncias entre 249 cidades. Em uma aplicação real, não é difícil chegar em milhares ou milhões de pontos. Neste cenário, o ganho de eficiência demonstrado aqui seria ainda mais valioso.
 
