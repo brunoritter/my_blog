@@ -10,11 +10,11 @@ output:
 ---
 
 
-# Introdução
+# Pra quem tem pressa, resumão:
 
-Neste blog, exploramos a aplicação da similaridade de cosseno para calcular distâncias entre pontos geográficos, utilizando uma aproximação esférica da Terra. Embora tenhamos simplificado a forma da Terra para um esferoide perfeito, os resultados demonstraram que essa abordagem introduz erros mínimos, tornando-a uma alternativa viável e eficiente para cálculos de distâncias em grande escala.
+Neste post, exploramos a aplicação da similaridade de cosseno para calcular distâncias entre pontos geográficos, utilizando uma aproximação esférica da Terra. Embora tenhamos simplificado a forma da Terra para um esferoide perfeito, os resultados demonstraram que essa abordagem introduz erros mínimos, tornando-a uma alternativa viável e eficiente para cálculos de distâncias em grande escala.
 
-Ao compararmos o método da similaridade de cosseno com a solução mais precisa do *geopy*, observamos que a diferença nas distâncias calculadas foi insignificante para a maioria das aplicações práticas, com um erro médio de apenas 0.2%. Além disso, a eficiência do nosso método foi surpreendente: ele foi mais de 2300 vezes mais rápido que o método preciso, o que se torna crucial quando lidamos com grandes volumes de dados.
+Ao compararmos o método da similaridade de cosseno com a solução mais precisa do *geopy*, observamos que a diferença nas distâncias calculadas foi insignificante para a maioria das aplicações práticas, com um erro médio de apenas 0.2%. Em troca, temos um código rodando centenas de vezes mais rápido, o que se torna crucial quando lidamos com grandes volumes de dados.
 
 Esse exercício, além de demonstrar como a distância de cosseno é idealizada e calculada, ilustra como um bom entendimento do problema pode levar a soluções altamente eficientes e suficientemente precisas para problemas complexos em ciência de dados. 
 
@@ -26,7 +26,15 @@ Depois de um tempo completamente dedicado à estudar matemática como os antigos
 
 Um dos primeiros desafios é o [travel planer](https://data-puzzles.com/challenges/travel-planner/), com a tag ‘feature engineering’. Considero que essa é uma das habilidades mais relevantes para um cientista de dados. A máxima “garbage in, garbage out” é repetida exaustivamente por uma razão: modelos simples com as features corretas podem operar milagres. O desafio te entrega uma base de dados com as coordenadas geográficas (latitude e longitude) de todas as capitais nacionais do mundo, e um objetivo simples: encontrar as duas capitais com a maior distância possível entre elas, considerando uma trajetória na superfície terrestre.
 
-O código abaixo carrega a base de dados e exibe as 5 primeiras linhas.
+Não é difícil relacionar o exercício à problemas práticos. Trabalhei em um projeto de varejo fazendo previsões de venda e recomendação de mix de produtos para lojas ao longo de todo o território nacional. Um dos experimentos bem sucedidos que fizemos foi incluir informações sobre o entorno geográfico de cada ponto de venda nos modelos. Para dar alguns exemplos, pensando em um raio de 5Km a partir da loja, podemos considerar: 
+
+* Existem escolas? Quantas?   
+* Existem outros estabelecimentos? De quais tipos?
+* Qual a distribuição de idade dos moradores?
+
+Para construir um dataset com este nível de informação, é necessário resolver o mesmo problema proposto pelo puzzle: encontrar distâncias na superfície terrestre a partir de coordenadas geográficas.
+
+Vamos explorar como isso pode ser feito. O código abaixo carrega a base de dados e exibe as 5 primeiras linhas.
 
 
 ```python
@@ -111,8 +119,7 @@ Usamos o numpy para fazer as operações:
 import numpy as np
 
 # Converte os ângulos para radianos
-capitals_df['lat_radians'] = np.radians(capitals_df['lat'])
-capitals_df['lng_radians'] = np.radians(capitals_df['lng'])
+capitals_df[['lat_radians', 'lng_radians']] = capitals_df[['lat', 'lng']].apply(np.radians)
 
 # Usa as relações demonstradas no diagrama acima para encontrar as coordenadas cartesianas
 capitals_df['x'] = np.cos(capitals_df['lat_radians']) * np.cos(capitals_df['lng_radians'])
@@ -142,7 +149,7 @@ mid_earth_r = (min_earth_r+max_earth_r)/2
 
 # Computa os tamanhos dos arcos em Km
 theta = np.arccos(cos)
-pairwise_distances = (theta * mid_earth_r)
+pairwise_distances = theta * mid_earth_r
 ```
 
 Pronto! Tudo calculado. Para encontrar a resposta do quiz (os nomes das duas capitais com maior distância entre si), buscamos os índices da maior distância armazenada nessa matriz.
@@ -165,7 +172,7 @@ Agora podemos conferir o gabarito e colocar nossa aproximação esférica a prov
 
 # O nosso método VS o "método correto"
 
-A solução do gabarito usa um método mais preciso para calcular as distâncias, disponível na função *distance* do *geopy*. E, em contraste com a operação matricial que demonstrei, faz um loop duplo por todas as linhas do dataset, extraindo os valores de latitude e longitude e os utilizando como input para a a função do *geopy*. 
+A solução do gabarito usa um método mais preciso para calcular as distâncias, disponível na função *distance* do *geopy*. E, em contraste com a operação matricial que demonstrei, faz um loop duplo por todas as linhas do dataset, extraindo os valores de latitude e longitude e os utilizando como input para a função do *geopy*. 
 
 
 ```python
@@ -206,25 +213,12 @@ Hm, erramos.
 
 Mas temos algumas coisas interessantes acontecendo. 
 
-Primeiro, note que Adamstown faz parte do par nos dois métodos, e que as maiores distâncias encontradas por cada método diferem em menos de 10Km. Dada a ordem de grandeza das distâncias medidas, e considerando que a extensão espacial de uma capital costuma ser maior do que 10Km, na prática, podemos dizer que essa diferença é insignificante. Para a maior parte das aplicações, um modelo que usa como feature a distância entre locais na superfície do globo não deve apresentar diferenças significativas se as distâncias forem calculas por um ou outro destes dois métodos.
+Primeiro, note que Adamstown faz parte do par nos dois métodos, e que as maiores distâncias encontradas por cada método diferem em menos de 10Km. Dada a ordem de grandeza das distâncias medidas, e considerando que a extensão espacial de uma capital costuma ser maior do que 10Km, na prática, podemos dizer que essa diferença é insignificante. 
 
-Em segundo lugar: quando rodei o código disponibilizado pelo gabarito notei que o tempo de execução foi gritantemente maior do que o tempo de execução do código que implementei. Rodei tudo de novo, dessa vez usando a biblioteca *time* para monitorar o tempo de execução dos dois métodos com precisão e fazer a comparação. Aqui, para não extender desenessariamente o texto, coloco como input os tempos calculados no meu notebook.
-
-
-```python
-cosine_execution_time = 0.019317626953125
-geopy_execution_time = 45.09127330780029
-
-print(f"O método do cosseno é {int(geopy_execution_time/cosine_execution_time)} mais rápido.")
-```
-
-O método do cosseno é 2334 mais rápido.
-
-O método aproximado é milhares de vezes mais rápido! A solução do gabarito leva 45s para calcular as distâncias entre 249 cidades. Em uma aplicação real, não é difícil chegar em milhares ou milhões de pontos. Neste cenário, o ganho de eficiência demonstrado aqui seria ainda mais valioso.
-
-Porém, antes de bater o martelo sobre qual seria o método mais adequado, é útil nos tornamos mais íntimos dos erros que estamos introduzindo nos dados. Assumimos no ínicio, com o argumento do achatamento desprezível, que os erros seriam pequenos. Agora, temos as distâncias calculadas tanto pelo método exato, quanto pela aproximação. 
+Assumimos no ínicio, com o argumento do achatamento desprezível, que os erros seriam pequenos. Agora, temos as distâncias calculadas tanto pelo método exato, quanto pela aproximação. 
 
 Vamos calcular os erros para cada par de capitais.
+
 
 
 ```python
@@ -268,7 +262,67 @@ plt.tight_layout()
 plt.show()
 ```
 
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="1440" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/chunk9-1.png" width="1440" />
 
-Não me restam mais dúvidas. A aproximação esférica resulta em erros muito pequenos, praticamente desprezíveis. Quase 3/4 da distâncias apresentam menos 0.2% de erro. Nenhuma distância apresenta erro maior do que 35Km. E o método é mais de 2300x mais rápido. Em uma aplicação profissional, implementaria a aproximação esférica sem pensar duas vezes.
+A aproximação esférica resulta em erros muito pequenos, praticamente desprezíveis. Quase 3/4 da distâncias apresentam menos 0.2% de erro. Nenhuma distância apresenta erro maior do que 35Km. Para a maior parte das aplicações, features que dependam da distância entre locais na superfície do globo não devem apresentar diferenças significativas se as distâncias forem calculadas por um ou outro destes dois métodos.
+
+Mas este ainda não é último argumento que pode ser feito a favor do método proposto. Quando rodei o código disponibilizado pelo gabarito notei que o tempo de execução foi gritantemente maior do que o tempo de execução do código que implementei. Rodei tudo de novo, dessa vez usando a biblioteca *time* para monitorar o tempo de execução dos dois métodos com precisão e fazer a comparação.
+
+
+```python
+import time
+
+# Executa e mede tempo de execução do método preciso
+geopy_time_start = time.time()
+geopy_pairwise_distances = np.empty([capitals_df.shape[0], capitals_df.shape[0]])
+for i in range(capitals_df.shape[0]):
+    for j in range(capitals_df.shape[0]):
+        lat_i = capitals_df.iloc[i]['lat']
+        lng_i = capitals_df.iloc[i]['lng']
+        lat_j = capitals_df.iloc[j]['lat']
+        lng_j = capitals_df.iloc[j]['lng']
+
+        geopy_pairwise_distances[i][j] = distance.distance(
+            (lat_i, lng_i),
+            (lat_j, lng_j)
+        ).km
+
+geopy_time_end = time.time()
+geopy_execution_time = geopy_time_end-geopy_time_start
+print(f"Geopy - Tempo de execução: {np.round(geopy_execution_time, 4)} s")
+```
+
+Geopy - Tempo de execução: 33.8079 s
+
+```python
+# Executa e mede tempo de execução do método proposto
+time_start = time.time()
+capitals_df[['lat_radians', 'lng_radians']] = capitals_df[['lat', 'lng']].apply(np.radians)
+capitals_df['x'] = np.cos(capitals_df['lat_radians']) * np.cos(capitals_df['lng_radians'])
+capitals_df['y'] = np.cos(capitals_df['lat_radians']) * np.sin(capitals_df['lng_radians'])
+capitals_df['z'] = np.sin(capitals_df['lat_radians'])
+matrix = capitals_df[['x', 'y', 'z']].to_numpy()
+cos = np.clip(np.dot(matrix,matrix.T), -1, 1)
+theta = np.arccos(cos)
+
+min_earth_r = 6357
+max_earth_r = 6378
+mid_earth_r = (min_earth_r+max_earth_r)/2
+pairwise_distances = theta * mid_earth_r
+time_end = time.time()
+cosine_execution_time = time_end-time_start
+print(f"Aproximação - Tempo de execução: {np.round(cosine_execution_time, 4)} s")
+```
+
+Aproximação - Tempo de execução: 0.0503 s
+
+```python
+print(f"O método do cosseno é {int(geopy_execution_time/cosine_execution_time)} mais rápido.")
+```
+
+O método do cosseno é 672 mais rápido.
+
+Neste exercício, estamos calculando distâncias entre 249 cidades. Em uma aplicação real, não é difícil chegar em milhares ou milhões de pontos. Neste cenário, o ganho de eficiência demonstrado aqui seria ainda mais valioso.
+
+Em contextos práticos, um método ligeiramente menos preciso, mas substancialmente mais rápido, pode ser a chave para processar grandes volumes de dados de forma viável.
 
