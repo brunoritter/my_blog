@@ -15,7 +15,7 @@ tags:
 
 Seguindo a jornada iniciada no primeiro post de resolver os desafios do data puzzles para tirar a poeira depois de alguns anos longe dos notebooks, neste post vamos explorar o desafio dos amigos atrasados.
 
-O nome do desafio é right on time, e tem como pré requisitos conhecimentos em fundamentos de estatística, distribuições de probabilidade, e capacidade de programar pequenas simulações "na unha". Parece divertido, e além disso, outra coisa que busquei exercitar neste post foi a tradução de conceitos estatísticos em uma linguagem mais simples e acessível.
+O nome do desafio é right on time, e tem como pré requisitos conhecimentos em fundamentos de estatística, distribuições de probabilidade, e capacidade de programar pequenas simulações "na unha". Parece divertido.
 
 O exercício é o seguinte: preciso marcar um compromisso com 4 amigos, e é importante que todos estejam presentes às 18h. Conhecendo meus amigos, sei que têm o hábito de se atrasar. Sei inclusive *como* - ou, ainda melhor, o *quanto* - eles costumam se atrasar. O tempo de chegada de cada um deles pode ser descrito como uma variável aleatória que segue uma distribuição normal, com média na hora marcada, e desvio padrão de 10 minutos. 
 
@@ -27,7 +27,7 @@ Primeiro, vamos entender o que as informações disponibilizadas significam. Sab
 
 Isso nos dá uma enorme previsibilidade sobre o comportamento dos nossos amigos, e já nos permite começar a fazer algumas simulações e visualizar nossas probabilidades.
 
-Vamos começar simulando 1000 encontros com um amigo, e em seguida montar um histograma dos atrasos nestes encontros.
+Vamos começar simulando 150 encontros com um amigo, e em seguida montar um histograma dos atrasos nestes encontros.
 
 
 ```python
@@ -37,10 +37,10 @@ import numpy as np
 
 # Usamos o numpy para obter 1000 amostras de uma distribuição de atrasos
 np.random.seed(1568)
-atraso_medio = 0
-desvio_padrão = 10
-sims = 1000 # define o número de simulações
-atrasos = np.random.normal(loc=atraso_medio, scale=desvio_padrão, size=sims)
+mu = 0  # atraso médio
+sigma = 10  # desvio padrão
+sims = 150 # define o número de simulações
+atrasos = np.random.normal(loc=mu, scale=sigma, size=sims)
 
 # Usamos o seaborn para plotar um histograma, com curva de densidade
 sns.histplot(atrasos, kde=True, bins=30, color='orange')
@@ -67,6 +67,47 @@ p_atraso = contagem_atrasos/sims
 print(f"Nosso amigo se atrasou em {contagem_atrasos} da simulações. Estimamos que a probabilidade de atraso é de {p_atraso*100}%")
 ```
 
-Nosso amigo se atrasou em 488 da simulações. Estimamos que a probabilidade de atraso é de 48.8%
+Nosso amigo se atrasou em 66 da simulações. Estimamos que a probabilidade de atraso é de 44.0%
 
-E este, meus caros, foi o método de Monte Carlo em ação. 
+E este, meus caros, foi o método de Monte Carlo em ação.
+
+A simulação de Monte Carlo é uma técnica estatística que utiliza a geração de números aleatórios para realizar simulações de processos complexos e calcular probabilidades. É particularmente útil para estimar probabilidades e expectativas de sistemas onde a solução analítica é difícil ou impossível de obter.
+
+Mas pera aí. Solução analítica difícil de obter?! Certamente não é o nosso caso.
+
+Se a nossa variável aleatória pode ser modelada como uma distribuição normal, nós sabemos exatamente a forma da função de densidade de probabilidades (PDF), sem precisar de simulações!
+
+$$
+f(x | \mu, \sigma) = \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}
+$$
+
+Neste modelo, `\(\mathbf{f(x|\mu,\sigma)}\)` dá a probabilidade de cada tempo de atraso específico `\(\mathbf{(x)}\)` dados os parâmetros da distribuição `\(\mathbf{(\mu,\sigma)}\)`. 
+
+Este modelo está implementado no `scipy.stats.norm.pdf`, e podemos usá-lo para visualizar as probabilidades:
+
+
+```python
+from scipy.stats import norm
+
+# Gerando valores para x (tempos de atraso)
+x = np.linspace(mu - 4*sigma, mu + 4*sigma, 1000)
+
+# Calculando a PDF
+pdf_values = norm.pdf(x, loc=mu, scale=sigma)
+
+# Plotando a PDF
+plt.plot(x, pdf_values, label='PDF', color='blue')
+
+# Configurando o título e os rótulos
+plt.title('Função Densidade de Probabilidade dos Atrasos')
+plt.xlabel('Tempo de atraso (min)')
+plt.ylabel('Densidade de Probabilidade')
+plt.legend()
+
+# Exibindo o gráfico
+plt.show()
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-3.png" width="672" />
+
+Para encontrar a probabilidade de atraso analiticamente, precisamos somar todas probabilidades de atrasos maiores do que `\(\mathbf{0}\)` minutos. Ou seja, precisamos integrar a PDF. A integral da PDF de uma distribuição é chamada de função de distribuição cumulativa (CDF). 
