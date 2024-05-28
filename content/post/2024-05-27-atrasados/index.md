@@ -23,7 +23,7 @@ O exercício é o seguinte: preciso marcar um compromisso com 4 amigos, e é imp
 
 Eis a questão.
 
-Primeiro, vamos entender o que as informações disponibilizadas significam. Sabemos que a média do tempo de chegada é o tempo marcado, ou seja, o *atraso médio* é `\(\mu = \mathbf{0} min\)`. E também sabemos *desvio padrão* do atraso médio é de `\(\sigma = 10  min\)`. 
+Primeiro, vamos entender o que as informações disponibilizadas significam. Sabemos que a média do tempo de chegada é o tempo marcado, ou seja, o *atraso médio* é `\(\mu = 0 min\)`. E também sabemos *desvio padrão* do atraso médio é de `\(\sigma = 10  min\)`. 
 
 Isso nos dá uma enorme previsibilidade sobre o comportamento dos nossos amigos, e já nos permite começar a fazer algumas simulações e visualizar nossas probabilidades.
 
@@ -56,22 +56,22 @@ plt.show()
 
 <img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-1-1.png" width="672" />
 
-Aqui temos uma visão completa do que significam os parâmetros da distribuição. Percebemos que nosso amigo se atrasou com a mesma frequência que se adiantou. Embora na maior parte das vezes o atraso é próximo de 10min, em algumas situações eu tive de esperar mais de 30min.
+Aqui temos uma visão completa do que significam os parâmetros da distribuição. Percebemos que nosso amigo se atrasou mais ou menos com a mesma frequência que se adiantou. E que embora na maior parte das vezes o atraso foi próximo de 10min, em algumas situações eu tive que esperar mais de 30min.
 
 Qual a probabilidade dele se atrasar? Podemos ver o registro das nossas simulações e calcular em qual proporção dos encontros ele se atrasou para obtermos uma estimativa.
 
 
 ```python
 contagem_atrasos = np.sum(atrasos > 0) 
-p_atraso = contagem_atrasos/sims
-print(f"Nosso amigo se atrasou em {contagem_atrasos} da simulações. Estimamos que a probabilidade de atraso é de {p_atraso*100}%")
+p_atraso_sim = contagem_atrasos/sims
+print(f"Nosso amigo se atrasou em {contagem_atrasos} da simulações. Estimamos que a probabilidade de atraso é de {p_atraso_sim*100}%")
 ```
 
 Nosso amigo se atrasou em 66 da simulações. Estimamos que a probabilidade de atraso é de 44.0%
 
 E este, meus caros, foi o método de Monte Carlo em ação.
 
-A simulação de Monte Carlo é uma técnica estatística que utiliza a geração de números aleatórios para realizar simulações de processos complexos e calcular probabilidades. É particularmente útil para estimar probabilidades e expectativas de sistemas onde a solução analítica é difícil ou impossível de obter.
+A simulação de Monte Carlo é uma técnica estatística que utiliza a geração de números aleatórios através de algum modelo matemático para realizar simulações de processos complexos e analisar a distribuição dos resultados. É particularmente útil para estimar probabilidades e expectativas de sistemas onde a solução analítica é difícil ou impossível de obter.
 
 Mas pera aí. Solução analítica difícil de obter?! Certamente não é o nosso caso.
 
@@ -81,7 +81,7 @@ $$
 f(x | \mu, \sigma) = \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}
 $$
 
-Neste modelo, `\(\mathbf{f(x|\mu,\sigma)}\)` dá a probabilidade de cada tempo de atraso específico `\(\mathbf{(x)}\)` dados os parâmetros da distribuição `\(\mathbf{(\mu,\sigma)}\)`. 
+Neste modelo, `\(f(x|\mu,\sigma)\)` dá a probabilidade de cada tempo de atraso específico `\((x)\)` dados os parâmetros da distribuição `\((\mu,\sigma)\)`. 
 
 Este modelo está implementado no `scipy.stats.norm.pdf`, e podemos usá-lo para visualizar as probabilidades:
 
@@ -110,4 +110,35 @@ plt.show()
 
 <img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-3.png" width="672" />
 
-Para encontrar a probabilidade de atraso analiticamente, precisamos somar todas probabilidades de atrasos maiores do que `\(\mathbf{0}\)` minutos. Ou seja, precisamos integrar a PDF. A integral da PDF de uma distribuição é chamada de função de distribuição cumulativa (CDF). 
+Para encontrar a probabilidade de atraso analiticamente, precisamos somar todas probabilidades de atrasos maiores do que `\(\mathbf{0}\)` minutos. Ou seja, precisamos integrar a PDF. A integral da PDF de uma distribuição é chamada de função de distribuição cumulativa (CDF). Mais especificamente, é uma integral de menos infinito até algum valor de `\(\mathbf{x}\)`. Podemos escrever ela assim:
+
+$$
+F(x) = P(X \leq x) = \int_{-\infty}^{x} f(t) \, dt
+$$
+Onde:
+
+  * `\(F(x)\)` é a função de distribuição cumulativa (CDF), que representa a probabilidade acumulada até o ponto `\(x\)`.
+  * `\(P(X \leq x)\)` é a probabilidade de que a variável aleatória `\(X\)` seja menor ou igual a `\(x\)`.
+  * `\(f(t)\)` é a função densidade de probabilidade (PDF) da variável aleatória X.
+  * `\(t\)` é a variável de integração.
+
+Na prática, isso significa que a CDF nos responde à pergunta: 
+
+"*qual a probabilidade do atraso ser __igual__ ou __menor__ do que `\(\mathbf{x}\)` min?*"
+
+E podemos usar isso para saber a probabilidade de atraso. A CDF também está implementada no `scipy`:
+
+
+```python
+# Calculando a CDF com F(x=0)
+x = 0
+cdf_x = norm.cdf(x, loc=mu, scale=sigma) # norm foi importado no bloco anterior
+
+# Calculando a probabilidade P(X>0) = 1-F(x=0)
+p_atraso_cdf = 1-cdf_x
+print(f"A probabilidade do nosso amigo atrasar é de {p_atraso_cdf*100}%")
+```
+
+A probabilidade do nosso amigo atrasar é de 50.0%
+
+Embora a simulação de Monte Carlo seja poderosa para estimar probabilidades em sistemas complexos, ela depende de um grande número de amostras para se aproximar do valor real. No nosso exemplo, a estimativa de 44% com Monte Carlo contrasta com os 50% obtidos analiticamente. Isso mostra que Monte Carlo precisa de mais simulações para alcançar precisão comparável aos métodos analíticos, que são exatos mas nem sempre disponíveis. Portanto, a escolha entre os métodos deve considerar a complexidade do problema e a necessidade de precisão.
