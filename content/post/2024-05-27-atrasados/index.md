@@ -1,0 +1,285 @@
+---
+title: 'Probabilidades: uma solução analítica e uma simulação de Monte Carlo'
+author: Bruno Ritter
+date: '2024-05-28'
+slug: atrasados
+categories:
+  - Data Science
+tags:
+  - probabilidade
+  - data science
+  - estatística
+---
+
+
+
+# Pra quem tem pressa, resumão:
+
+Neste post, exploramos duas maneiras de resolver um exercício de probabilidade:
+ 
+ * Simulações de Monte Carlo
+ * Funções de probabilidade, como a função de densidade de probabilidade e função quantil
+
+Entro em detalhes sobre como implementar e analisar uma simulação de Monte Carlo, e também explico como interpretar e utilizar as funções `norm.pdf`, `norm.cdf` e `norm.ppf`, do `scipy.stats`.
+
+A ideia é ser um texto bem didático, com todo o código necessário para acompanhar os exercícios acompanhando o texto. Espero que goste da leitura ;)
+
+# Introdução 
+
+Seguindo a jornada iniciada no [primeiro post](https://brunoritter.netlify.app/2024/05/14/a-similaridade-de-cosseno-aproxima%C3%A7%C3%B5es-e-efic%C3%AAncia-de-c%C3%B3digo/index.html) de resolver os desafios do [data-puzzles](https://data-puzzles.com/) para tirar a poeira depois de alguns anos longe dos notebooks, neste post vamos explorar o desafio dos amigos atrasados.
+
+O nome do desafio é [right on time](https://data-puzzles.com/challenges/right-on-time/), e tem como pré requisitos conhecimentos em fundamentos de estatística, distribuições de probabilidade, e capacidade de programar pequenas simulações "na unha". Parece divertido.
+
+O exercício é o seguinte: preciso marcar um compromisso com 4 amigos, e é importante que todos estejam presentes às 18h. Conhecendo meus amigos, sei que têm o hábito de se atrasar. Sei inclusive *como* - ou, ainda melhor, o *quanto* - eles costumam se atrasar. O tempo de chegada de cada um deles pode ser descrito como uma variável aleatória que segue uma distribuição normal, com média `\(\mu\)` na hora marcada, e desvio padrão `\(\sigma\)` de 10 minutos. 
+
+**Qual é o horário que devo marcar para ter 99% de confiança de que todos meus amigos estarão presentes às 18h?**
+
+Eis a questão.
+
+# Simulando para estimar (Monte Carlo)
+
+Já que o exercício propõe o uso de simulações, vamos começar simulando 150 encontros com um amigo, e em seguida montar um histograma dos atrasos nestes encontros.
+
+
+```python
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Usamos o numpy para obter 150 amostras de uma distribuição de atrasos
+np.random.seed(1568)
+mu = 0  # atraso médio
+sigma = 10  # desvio padrão
+sims = 150 # define o número de simulações
+atrasos = np.random.normal(loc=mu, scale=sigma, size=sims)
+
+# Usamos o seaborn para plotar um histograma, com curva de densidade
+sns.histplot(atrasos, kde=True, bins=30, color='orange')
+
+# Configurando o título e os rótulos
+plt.title('Histograma com Curva de Densidade')
+plt.xlabel('Atraso (min)')
+plt.ylabel('Frequência')
+
+# Exibindo o gráfico
+plt.show()
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-1-1.png" width="672" />
+
+Aqui temos uma visão completa do que significam os parâmetros da distribuição. Percebemos que nosso amigo se atrasou mais ou menos com a mesma frequência que se adiantou. E que embora na maior parte das vezes o atraso foi próximo de 10min, em algumas situações eu tive que esperar quase 30min.
+
+Qual a probabilidade dele se atrasar? Podemos ver o registro das nossas simulações e calcular em qual proporção dos encontros ele se atrasou para obtermos uma estimativa.
+
+
+```python
+contagem_atrasos = np.sum(atrasos > 0) 
+p_atraso_sim = contagem_atrasos/sims
+print(f"Nosso amigo se atrasou em {contagem_atrasos} da simulações. Estimamos que a probabilidade de atraso é de {p_atraso_sim*100}%")
+```
+
+Nosso amigo se atrasou em 66 da simulações. Estimamos que a probabilidade de atraso é de 44.0%
+
+E este, meus caros, foi o método de Monte Carlo em ação.
+
+A simulação de Monte Carlo é uma técnica estatística que utiliza a geração de números aleatórios através de algum modelo matemático para realizar simulações de processos complexos e analisar a distribuição dos resultados. É particularmente útil para estimar probabilidades e expectativas de sistemas onde a solução analítica é difícil ou impossível de obter.
+
+Mas pera aí. Solução analítica difícil de obter?! Certamente não é o nosso caso.
+
+# Soluções analíticas
+
+Se a nossa variável aleatória pode ser modelada como uma distribuição normal, nós sabemos exatamente a forma da função de densidade de probabilidades (PDF), sem precisar de simulações!
+
+$$
+f(x | \mu, \sigma) = \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}
+$$
+
+Neste modelo, `\(f(x|\mu,\sigma)\)` dá a probabilidade de cada tempo de atraso específico `\((x)\)` dados os parâmetros da distribuição `\((\mu,\sigma)\)`. 
+
+Este modelo está implementado no `scipy.stats.norm.pdf`, e podemos usá-lo para visualizar as probabilidades:
+
+
+```python
+from scipy.stats import norm
+
+# Gerando valores para x (tempos de atraso)
+x = np.linspace(mu - 4*sigma, mu + 4*sigma, 1000)
+
+# Calculando a PDF
+pdf_values = norm.pdf(x, loc=mu, scale=sigma)
+
+# Plotando a PDF
+plt.plot(x, pdf_values, label='PDF', color='blue')
+
+# Configurando o título e os rótulos
+plt.title('Função Densidade de Probabilidade dos Atrasos')
+plt.xlabel('Tempo de atraso (min)')
+plt.ylabel('Densidade de Probabilidade')
+plt.legend()
+
+# Exibindo o gráfico
+plt.show()
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-3.png" width="672" />
+
+Para encontrar a probabilidade de atraso analiticamente, precisamos somar todas probabilidades de atrasos maiores do que `\(\mathbf{0}\)` minutos. Ou seja, precisamos integrar a PDF. A integral da PDF de uma distribuição é chamada de função de distribuição cumulativa (CDF). Mais especificamente, é uma integral de menos infinito até algum valor de `\(\mathbf{x}\)`. Podemos escrever ela assim:
+
+$$
+F(x) = P(X \leq x) = \int_{-\infty}^{x} f(t) \, dt
+$$
+Onde:
+
+  * `\(F(x)\)` é a função de distribuição cumulativa (CDF), que representa a probabilidade acumulada até o ponto `\(x\)`.
+  * `\(P(X \leq x)\)` é a probabilidade de que a variável aleatória `\(X\)` seja menor ou igual a `\(x\)`.
+  * `\(f(t)\)` é a função densidade de probabilidade (PDF) da variável aleatória X.
+  * `\(t\)` é a variável de integração.
+
+Na prática, isso significa que a CDF nos responde à pergunta: 
+
+"*Qual a probabilidade do atraso ser __igual__ ou __menor__ do que `\(\mathbf{x}\)` min?*"
+
+E podemos usar isso para saber a probabilidade de atraso. A CDF também está implementada no `scipy`:
+
+
+```python
+# Calculando a CDF com F(x=0)
+x = 0
+cdf_x = norm.cdf(x, loc=mu, scale=sigma) # norm foi importado no bloco anterior
+
+# Calculando a probabilidade P(X>0) = 1-F(x=0)
+p_atraso_cdf = 1-cdf_x
+print(f"A probabilidade do nosso amigo atrasar é de {p_atraso_cdf*100}%")
+```
+
+A probabilidade do nosso amigo atrasar é de 50.0%
+
+Embora a simulação de Monte Carlo seja poderosa para estimar probabilidades em sistemas complexos, ela depende de um grande número de amostras para se aproximar do valor real. No nosso exemplo, a estimativa de 44% com Monte Carlo contrasta com os 50% obtidos analiticamente. Isso mostra que Monte Carlo precisa de mais simulações para alcançar precisão comparável aos métodos analíticos, que são exatos mas nem sempre disponíveis. Portanto, a escolha entre os métodos deve considerar a complexidade do problema e a necessidade de precisão.
+
+No nosso caso, seria muito simples aumentar a amostra de simulaçoes. Mas também podemos continuar explorando as propriedades matemáticas da distribuição normal para encontrar as soluções exatas e dispensar as simulações sugeridas pelo enunciado do exercício.
+
+# Essa tal de confiança
+
+O nosso problema tem a ver com encontrar um horário que nos dá 99% de confiança na presença dos amigos. Podemos partir da CDF para fazer essa análise. Já a usamos para calcular qual é o atraso que acontece 50% das vezes: `\(0\)` minutos ou menos. Assim eu posso afirmar que, se eu marcar um compromisso às 18h com meu amigo, tenho 50% de confiança que ele chegará *até* às 18h.
+
+Se tivermos a função inversa da CDF, podemos usar como input um valor de probabilidade, e obter um tempo de atraso que corresponde àquela densidade de probabilidades. Ou seja, podemos fazer a pergunta: *posso ter 99% de confiança de que meu amigo chegará em qual horário?* 
+
+A inversa da CDF é **função quantil**. Acessível no python através de `scipy.stats.norm.ppf`:
+
+
+```python
+conf_alvo = .99
+atraso_alvo = norm.ppf(conf_alvo, loc=mu, scale=sigma)
+
+print(f"Temos 99% de confiança de que o atraso será de {np.round(atraso_alvo, 2)} min ou menos")
+```
+
+Temos 99% de confiança de que o atraso será de 23.26 min ou menos
+
+Ou seja, se eu quero ter 99% de confiança de que ele chegará até as 18h, preciso marcar com 23 min de antecedência: às **_17h37_**.
+
+Problema resolvido? Quase.
+
+Essa análise leva em conta um compromisso com **um** amigo, mas o nosso problema original tem **quatro** amigos. Como isso afeta nossa vida?
+
+# Multiplicação de probabilidades
+
+Se o grupo for junto (de carona) para o nosso compromisso, o atraso deles seria um evento único, e a análise que fizemos seria o suficiente. Mas num cenário em que cada um deles segue o seu próprio caminho, temos 4 atrasos independentes interagindo.
+
+Neste caso, as probabilidades se multiplicam. Isso acontece porque estamos olhando para a combinação de todos os resultados possíveis. A multiplicação das probabilidades reflete o fato de que cada evento é independente e precisamos que todos os eventos favoráveis (atrasos menores que 23 min) ocorram simultaneamente.
+
+Na prática, veja o que acontece com as probabilidades que calculamos:
+
+
+```python
+x = 18*60 # horário real do compromisso, em minutos
+mu = x - atraso_alvo # o horário marcado (horário real - atraso provável)
+sigma = 10 # desvio padrão do horário de chegada
+
+# Calcula a probabilidade acumulada para um amigo
+um_amigo = norm.cdf(x, loc=mu, scale=sigma)
+print(f"Marcando às 17h37 temos {np.round(um_amigo*100, 1)}% de confiança de que um amigo chegará até as 18h.")
+```
+
+Marcando às 17h37 temos 99.0% de confiança de que um amigo chegará até as 18h.
+
+```python
+# Calcula a probabilidade para 4 amigos simultaneamente
+quatro_amigos = um_amigo ** 4
+print(f"Mas apenas {np.round(quatro_amigos*100, 1)}% de confiança que todos os 4 amigos estarão presentes até às 18h.")
+```
+
+Mas apenas 96.1% de confiança que todos os 4 amigos estarão presentes até às 18h.
+
+A confiança diminui. 
+
+Se o nosso objetivo é ter 99% de confiança com 4 amigos, precisamos encontrar qual é a probabilidade `\(P\)` para um único amigo que, quando elevada à quarta potência (refletindo a interação entre os 4 possíveis atrasos) resulte em `\(.99\)`:
+
+$$
+P^4 = .99
+$$
+$$
+∴ P = (.99)^{\frac{1}{4}}
+$$
+Basta substituirmos esse valor na função quantil para obtermos qual é o *atraso conjunto* provável:
+
+
+```python
+conf_alvo = .99 ** (1/4)
+mu = 0
+sigma = 10
+atraso_alvo = norm.ppf(conf_alvo, loc=mu, scale=sigma)
+
+print(f"Temos 99% de confiança de que o atraso conjunto será de {np.round(atraso_alvo, 2)} min ou menos")
+```
+
+Temos 99% de confiança de que o atraso conjunto será de 28.06 min ou menos
+
+Agora sim. Para termos 99% de confiança de que todos estarão presentes às 18h, **o horário marcado deve ser 17h32** (28 min de antecedência).
+
+# Finalizando com Monte Carlo
+
+Já concluímos a solução do problema analíticamente e não nos resta dúvidas sobre o horário correto para marcar o compromisso. Mas já que seguimos a recomendação do puzzle e começamos o post explorando o método de Monte Carlo, vamos concluir vendo como seria uma solução completamente baseada em resultados simulados, ignorando a existência do ferramental estatístico explorado nas seções anteriores.
+
+Neste caso, vamos simular vários encontros com os 4 amigos, e conferir como se comporta o mais atrasado entre eles ao longo de todas simulações.
+
+
+```python
+# Parâmetros da distribuição
+atraso_medio = 0
+desvio_padrao = 10
+sims = 100000  # Número de simulações
+amigos = 4  # Número de amigos
+
+# Simulando os atrasos de 4 amigos
+atrasos_amigos = np.random.normal(loc=atraso_medio, scale=desvio_padrao, size=(sims, amigos))
+
+# Encontrando o atraso máximo em cada simulação
+atraso_maximo = np.max(atrasos_amigos, axis=1)
+
+# Plotando o histograma do atraso máximo
+sns.histplot(atraso_maximo, kde=True, bins=30, color='blue')
+
+# Configurando o título e os rótulos
+plt.title('Histograma do Atraso Máximo dos Amigos')
+plt.xlabel('Atraso (min)')
+plt.ylabel('Frequência')
+
+# Exibindo o gráfico
+plt.show()
+```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-5.png" width="672" />
+
+Simulando 100.000 encontros, vemos que o último amigo a chegar costuma estar em média 10 minutos atrasado. Seguindo a marca dos 99% confiança que estamos buscando, podemos procurar qual é o tempo de atraso que marca o percentil 99 dessa distribuição de atrasos simulados:
+
+
+```python
+# Calculando o percentil 99 do atraso máximo
+atraso_percentil_99 = np.percentile(atraso_maximo, 99)
+print(f"99% dos atrasos simulados são de {np.round(atraso_percentil_99, 2)} minutos ou menos")
+```
+
+99% dos atrasos simulados são de 28.08 minutos ou menos
+
+De forma nem um pouco surpreendente, as simulações chegaram na mesma conclusão: O horário marcado deve ser 17h32, 28 minutos antes do horário alvo. 
