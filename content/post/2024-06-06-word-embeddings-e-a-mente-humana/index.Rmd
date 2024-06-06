@@ -1,0 +1,12 @@
+---
+title: Word embeddings e a mente humana
+author: Bruno Ritter
+date: '2024-06-06'
+slug: word-embeddings-e-a-mente-humana
+categories:
+  - Data Science
+tags:
+  - data science
+  - IA
+  - NLP
+---
